@@ -4,8 +4,15 @@
 plugin.tx_mdsaml {
   settings {
 
+    # cat=plugin.tx_mdsaml; type=bool; label=Enable extension
+    enable = 1
+
     # cat=plugin.tx_mdsaml//fe_users; type=bool; label=Activate SSO login for frontend users
     fe_users.active = 1
+
+    # cat=plugin.tx_mdsaml//be_users; type=bool; label=Activate SSO login for backend users
+    be_users.active = 1
+
 
   }
 }

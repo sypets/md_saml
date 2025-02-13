@@ -90,11 +90,19 @@ class SettingsService implements SingletonInterface
                     ''
                 );
             }
-
-            if ((is_countable($this->extSettings) ? count($this->extSettings) : 0) === 0) {
-                throw new \RuntimeException('The TypoScript of ext:md_saml was not loaded.', 1648151884);
-            }
         }
+
+        $isEnabled = (bool)($this->extSettings['enable'] ?? false);
+        if (mb_strtolower($loginType) === 'fe') {
+           if (!$isEnabled || !(bool)($this->extSettings['fe_users']['active'] ?? false)) {
+               return [];
+           }
+        } else {
+           if (!$isEnabled || !(bool)($this->extSettings['be_users']['active'] ?? false)) {
+               return [];
+           }
+        }
+
 
         // Merge settings according to given context (frontend or backend)
         $this->extSettings['saml'] = array_replace_recursive($this->extSettings['saml'], $this->extSettings[mb_strtolower($loginType) . '_users']['saml']);
@@ -104,6 +112,7 @@ class SettingsService implements SingletonInterface
         $this->extSettings['saml']['sp']['entityId'] = $this->extSettings['saml']['baseurl'] . $this->extSettings['saml']['sp']['entityId'];
         $this->extSettings['saml']['sp']['assertionConsumerService']['url'] = $this->extSettings['saml']['baseurl'] . $this->extSettings['saml']['sp']['assertionConsumerService']['url'];
         $this->extSettings['saml']['sp']['singleLogoutService']['url'] = $this->extSettings['saml']['baseurl'] . $this->extSettings['saml']['sp']['singleLogoutService']['url'];
+
 
         $this->extSettings = $this->convertBooleans($this->extSettings);
 
