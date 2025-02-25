@@ -17,6 +17,7 @@ use Mediadreams\MdSaml\Event\AfterSettingsAreProcessedEvent;
 use Mediadreams\MdSaml\Event\BeforeSettingsAreProcessedEvent;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\SingletonInterface;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Site\SiteFinder;
@@ -37,7 +38,7 @@ class SettingsService implements SingletonInterface
 
     protected EventDispatcherInterface $eventDispatcher;
 
-    public function __construct(private readonly LoggerInterface $logger)
+    public function __construct(private readonly LoggerInterface $logger, private readonly ExtensionConfiguration $extensionConfiguration)
     {
         $this->eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
     }
@@ -78,12 +79,13 @@ class SettingsService implements SingletonInterface
         )->getSettings();
 
         if ($this->extSettings === []) {
+            /*
             // Backend mode, no TSFE loaded
             if (!isset($GLOBALS['TSFE'])) {
                 $typoScriptSetup = $this->getTypoScriptSetup($this->getRootPageId());
                 $this->extSettings = $typoScriptSetup['plugin']['tx_mdsaml']['settings'] ?? [];
             } else {
-                /** @var ConfigurationManager $configurationManager */
+                // @var ConfigurationManager $configurationManager
                 $configurationManager = GeneralUtility::makeInstance(ConfigurationManager::class);
                 $this->extSettings = $configurationManager->getConfiguration(
                     ConfigurationManagerInterface::CONFIGURATION_TYPE_SETTINGS,
@@ -91,7 +93,8 @@ class SettingsService implements SingletonInterface
                     ''
                 );
             }
-
+            */
+            $this->extSettings = $this->getExtensionConfiguration();
             if (!$this->extSettings) {
                 $this->logger->error('No TypoScript plugin.tx_mdsaml.settings configured. Perhaps you did not include the md_saml static include.');
                 return [];
@@ -112,6 +115,30 @@ class SettingsService implements SingletonInterface
         return $this->eventDispatcher->dispatch(
             new AfterSettingsAreProcessedEvent($loginType, $this->extSettings)
         )->getSettings();
+    }
+
+    private function getExtensionConfiguration(): array
+    {
+        $extSettings = $this->extensionConfiguration->get('md_saml') ?? [];
+        if (!isset($extSettings['saml']['baseurl'])) {
+            $extSettings['saml']['baseurl'] = $extSettings['mdsamlSpBaseUrl'] ?? '';
+        }
+
+        // convert bool settings to boolean
+        $extSettings['publicMetadata'] = (bool)($extSettings['publicMetadata'] ?? false);
+        $extSettings['be_users']['active'] = (bool)($extSettings['be_users']['active'] ?? true);
+        $extSettings['be_users']['createIfNotExist'] = (bool)($extSettings['be_users']['createIfNotExist'] ?? true);
+        $extSettings['be_users']['updateIfExist'] = (bool)($extSettings['be_users']['updateIfExist'] ?? true);
+        $extSettings['fe_users']['active'] = (bool)($extSettings['fe_users']['active'] ?? true);
+        // saml.sp.assertionConsumerService.auto
+        $extSettings['fe_users']['saml']['sp']['assertionConsumerService']['auto'] = (bool)($extSettings['fe_users']['saml']['sp']['assertionConsumerService']['auto'] ?? false);
+        $extSettings['fe_users']['createIfNotExist'] = (bool)($extSettings['fe_users']['createIfNotExist'] ?? true);
+        $extSettings['fe_users']['updateIfExist'] = (bool)($extSettings['fe_users']['updateIfExist'] ?? true);
+        $extSettings['saml']['strict'] = (bool)($extSettings['saml']['strict'] ?? true);
+        $extSettings['saml']['debug'] = (bool)($extSettings['saml']['debug'] ?? false);
+        $extSettings['saml']['sp']['attributeConsumingService']['requestedAttributes']['isRequired'] = (bool)($extSettings['saml']['sp']['attributeConsumingService']['requestedAttributes']['isRequired'] ?? false);
+
+        return $extSettings;
     }
 
     /**
