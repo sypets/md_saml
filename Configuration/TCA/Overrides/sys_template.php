@@ -9,3 +9,4 @@ ExtensionManagementUtility::addStaticFile(
     'Configuration/TypoScript',
     'Single Sign-on with SAML'
 );
+

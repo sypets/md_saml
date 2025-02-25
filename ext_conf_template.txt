@@ -1,0 +1,235 @@
+# cat=basic; type=string; label=mdsamlSpBaseUrl
+mdsamlSpBaseUrl =
+
+# cat=basic; type=bool; label=Make metadata public
+publicMetadata = 0
+
+be_users {
+    # cat=backend; type=bool; label=BE active
+    active = 1
+
+    saml {
+        sp {
+            # cat=backend; type=string; label=BE entityId
+            entityId = /typo3/index.php?loginProvider=1648123062&mdsamlmetadata
+
+            assertionConsumerService {
+
+                # cat=backend; type=string; label=BE assertionConsumerService URL
+                url = /typo3/index.php?loginProvider=1648123062&login-provider=md_saml&login_status=login&acs
+            }
+        }
+    }
+
+    # cat=backend; type=bool; label=BE Decide whether a new backend user should be created
+    createIfNotExist = 1
+
+    # cat=backend; type=bool; label=BE Decide whether to update a existing backend user with new data
+    updateIfExist = 1
+
+    transformationArr {
+        # cat=backend; type=string; label=BE transformationArr username
+        username = http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname
+
+        # cat=backend; type=string; label=BE transformationArr email
+        email = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+
+        # cat=backend; type=string; label=BE transformationArr realName
+        realName = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname
+    }
+
+    databaseDefaults {
+        # cat=backend; type=int; label=BE usergroup
+        usergroup = 1
+
+        # cat=backend; type=string; label=BE lang
+        lang = de
+
+        # cat=backend; type=string; label=BE mountpoints (csv)
+        db_mountpoints = 1
+
+        # cat=backend; type=string; label=BE file mountpoints (csv)
+        file_mountpoints = 1
+    }
+}
+
+# Frontend users
+fe_users {
+    # cat=frontend; type=bool; label=FE active
+    active = 1
+
+    # Identifier of the SP entity  (must be a URI)
+    # ATTENTION: `mdsamlSpBaseUrl` will be attached automatically
+    # Example (just replace the speaking path ("/login/") according to your needs): `/login/?loginProvider=1648123062&mdsamlmetadata`
+
+    saml {
+
+        sp {
+
+            # cat=frontend; type=string; label=FE entityID: Must be an URI, mdsamlSpBaseUrl will be attached automatically
+            entityId =
+
+            assertionConsumerService {
+                # cat=frontend; type=string; label=FE assertionConsumerService: Must be an URI: Example (just replace the speaking path ("/login/") according to your needs): `/login/?loginProvider=1648123062&login-provider=md_saml&login_status=login&acs&logintype=login`
+                url =
+                # cat=frontend; type=bool; label=FE assertionConsumerService auto: if enable login is detected from url above, "?loginProvider=1648123062&login-provider=md_saml&login_status=login&acs&logintype=login" not needed)
+                auto = 0
+            }
+
+
+
+        }
+
+    }
+
+    # cat=frontend; type=bool; label=FE Decide whether a new frontend user should be created
+    createIfNotExist = 1
+
+    # cat=frontend; type=bool; label=FE Decide whether to update a existing frontend user with new data
+    updateIfExist = 1
+
+    // Configuration of the returning parameters of the SSO.
+    // This array will be merged with `beUser.databaseDefaults`.
+    transformationArr {
+        # cat=frontend; type=string; label=FE transformationArr username
+        username = http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname
+
+        # cat=frontend; type=string; label=FE transformationArr email
+        email = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
+
+        # cat=frontend; type=string; label=FE transformationArr name
+        name = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/displayname
+
+        # cat=frontend; type=string; label=FE transformationArr first_name
+        first_name = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname
+
+        # cat=frontend; type=string; label=FE transformationArr last_name
+        last_name = http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname
+    }
+
+    // This section allows you to set defaults for a newly created frontend users
+    // You can add all fields of the database here
+    databaseDefaults {
+        # cat=frontend; type=int; label=FE databaseDefaults pid
+        pid = 1
+
+        # cat=frontend; type=int; label=FE databaseDefaults usergroup
+        usergroup = 1
+    }
+}
+
+# This holds the whole SAML configuration
+# For more details on the configuration see https://github.com/onelogin/php-saml
+saml {
+  # cat=saml; type=bool; label=Strict: If 'strict' is True, then the PHP Toolkit will reject unsigned or unencrypted messages if it expects them signed or encrypted. Also will reject the messages if not strictly follow the SAML standard: Destination, NameId, Conditions ... are validated too.
+  strict = 1
+
+  # cat=saml; type=bool; label=Enable debug mode (to print errors)
+  debug = 0
+
+  // Set a BaseURL to be used instead of try to guess
+  // the BaseURL of the view that process the SAML Message.
+  // Ex. http://sp.example.com/
+  // http://example.com/sp/
+  # cat=saml; type=string; label=Baseurl, is usually the same as mdsamlSpBaseUrl: If empty, will be set to mdsamlSpBaseUrl
+  baseurl=
+
+  # Service Provider Data that we are deploying
+  # *******************************************
+  sp {
+    # cat=saml; type=string; label=Identifier of the SP entity  (must be a URI): ATTENTION: `mdsamlSpBaseUrl` will be attached automatically
+    entityId = /typo3/index.php?loginProvider=1648123062&mdsamlmetadata
+
+    # Specifies info about where and how the <AuthnResponse> message MUST be
+    # returned to the requester, in this case our SP.
+    assertionConsumerService {
+      # cat=saml; type=string; label=URL Location where the <Response> from the IdP will be returned: ATTENTION: `mdsamlSpBaseUrl` will be attached automatically
+      url = /typo3/index.php?loginProvider=1648123062&login-provider=md_saml&login_status=login&acs
+
+      # cat=saml; type=string; label=SAML protocol binding to be used when returning the <Response> message.  Onelogin Toolkit supports for this endpoint the HTTP-POST binding only
+      binding = urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST
+    }
+
+
+    attributeConsumingService {
+      # cat=saml;attributeConsumingService type=string; label=attributeConsumingService serviceName: If you need to specify requested attributes, set a attributeConsumingService. nameFormat, attributeValue and friendlyName can be omitted. Otherwise remove this section.
+      serviceName = SP MdSaml,
+
+      # cat=saml;attributeConsumingService type=string; label=attributeConsumingService serviceDescription
+      serviceDescription = SAML Service of ext:md_saml
+      requestedAttributes {
+        10 {
+          # cat=saml;attributeConsumingService type=string; label=attributeConsumingService requestedAttributes name
+          name =
+          # cat=saml;attributeConsumingService type=bool; label=attributeConsumingService requestedAttributes isRequired
+          isRequired = 0
+
+          # cat=saml;attributeConsumingService type=string; label=attributeConsumingService requestedAttributes nameFormat
+          nameFormat =
+
+          # cat=saml;attributeConsumingService type=string; label=attributeConsumingService requestedAttributes friendlyName
+          friendlyName =
+
+          # cat=saml;attributeConsumingService type=string; label=attributeConsumingService requestedAttributes attributeValue
+          attributeValue =
+        }
+      }
+    }
+
+    // Specifies info about where and how the <Logout Response> message MUST be
+    // returned to the requester, in this case our SP.
+    singleLogoutService {
+      # cat=saml;singleLogoutService type=string; label=URL Location where the <Response> from the IdP will be returned:ATTENTION: `mdsamlSpBaseUrl` will be attached automatically
+      url = /index.php?loginProvider=1648123062&sls
+
+      # cat=saml;singleLogoutService type=string; label=SAML protocol binding to be used when returning the <Response> message:  Onelogin Toolkit supports for this endpoint the HTTP-Redirect binding only
+      binding = urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
+    }
+
+    # cat=saml type=string; label=Specifies constraints on the name identifier to be used to represent the requested subject:  Take a look on lib/Saml2/Constants.php to see the NameIdFormat supported
+    NameIDFormat = urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified
+
+    # cat=saml;cert type=string; label=cert: Usually x509cert and privateKey of the SP are provided by files placed at the certs folder. But we can also provide them with the following parameters
+    x509cert =
+    # cat=saml;cert type=string; label=Private key
+    privateKey =
+
+    # cat=saml;cert type=string; label=x509certNew: Key rollover If you plan to update the SP x509cert and privateKey you can define here the new x509cert and it will be published on the SP metadata so Identity Providers can read them and get ready for rollover.
+    x509certNew =
+  } // end sp
+
+
+  // Identity Provider Data that we want connect with our SP
+  // *******************************************************
+  idp {
+
+    # cat=idp; type=string; label=Identifier of the IdP entity  (must be a URI)
+    entityId =
+
+    # SSO endpoint info of the IdP. (Authentication Request protocol)
+    singleSignOnService {
+
+      # cat=idp; type=string; label=URL Target of the IdP where the SP will send the Authentication Request Message
+      url =
+
+      # cat=idp; type=string; label=binding: SAML protocol binding to be used when returning the <Response> message.  Onelogin Toolkit supports for this endpoint the HTTP-Redirect binding only
+      binding = urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
+    }
+
+    // SLO endpoint info of the IdP.
+    singleLogoutService {
+      # cat=idp; type=string; label=URL Location of the IdP where the SP will send the SLO Request
+      url =
+
+      # cat=idp; type=string; label=URL location of the IdP where the SP SLO Response will be sent (ResponseLocation):  if not set, url for the SLO Request will be used
+      responseUrl =
+
+      # cat=idp; type=string; label=SAML protocol binding to be used when returning the <Response> message.  Onelogin Toolkit supports for this endpoint the HTTP-Redirect binding only
+      binding = urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
+    }
+
+    # cat=idp; type=string; label=Public x509 certificate of the IdP
+    x509cert =  }
+} // end saml
+
+
